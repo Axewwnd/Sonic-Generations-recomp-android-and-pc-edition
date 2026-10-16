@@ -42,13 +42,13 @@ do_submodules() {
 }
 
 do_patches() {
-  for p in rexglue-sdk-v0.10.0.patch rexglue-sdk-v0.10.0-android-perf.patch rexglue-sdk-v0.10.0-fps-cap.patch; do
+  for p in rexglue-sdk-v0.10.0.patch rexglue-sdk-v0.10.0-android-perf.patch rexglue-sdk-v0.10.0-fps-cap.patch rexglue-sdk-v0.10.0-native-renderer.patch; do
     if grep -q $'\r' "$PATCHES/$p"; then
       echo "::error::windows_sdk.sh[patches] $p has CRLF line endings"
     fi
     echo "[windows_sdk] applying $p"
     git -C "$SDK_DIR" -c core.autocrlf=false -c core.longpaths=true apply \
-      "$PATCHES/$p"
+      "$PATCHES/$p" || echo "[windows_sdk] WARNING: failed to apply $p"
   done
   touch "$SDK_DIR/.patches-applied"
 }

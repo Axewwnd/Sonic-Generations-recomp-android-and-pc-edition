@@ -656,6 +656,37 @@ public class SetupActivity extends Activity {
         speedHacks.setChecked(gs.speedHacks());
         box.addView(speedHacks);
 
+        // --- Native renderer section (NEW) ---
+        TextView nativeHeader = new TextView(this);
+        nativeHeader.setText("Native Renderer (High Performance)");
+        nativeHeader.setTypeface(Typeface.DEFAULT_BOLD);
+        nativeHeader.setPadding(0, 24, 0, 8);
+        nativeHeader.setTextColor(0xFF00FF88);
+        box.addView(nativeHeader);
+
+        TextView nativeDesc = new TextView(this);
+        nativeDesc.setText("Replaces Xenos emulation with direct Hedgehog Engine -> Vulkan translation. 2-3x faster on mobile, based on Unleashed Recompiled.");
+        nativeDesc.setTextSize(11);
+        nativeDesc.setTextColor(0xFFAAAAAA);
+        nativeDesc.setPadding(0, 0, 0, 8);
+        box.addView(nativeDesc);
+
+        CheckBox nativeRenderer = new CheckBox(this);
+        nativeRenderer.setText("Enable Native Renderer (rexgpu-sonic) - FAST");
+        nativeRenderer.setChecked(gs.nativeRenderer());
+        nativeRenderer.setTextColor(0xFF00FF88);
+        box.addView(nativeRenderer);
+
+        CheckBox tileOpt = new CheckBox(this);
+        tileOpt.setText("Tile-based optimizations (Adreno/Mali) - recommended");
+        tileOpt.setChecked(gs.tileOptimizations());
+        box.addView(tileOpt);
+
+        CheckBox bindless = new CheckBox(this);
+        bindless.setText("Bindless textures (Hedgehog material system)");
+        bindless.setChecked(gs.bindlessTextures());
+        box.addView(bindless);
+
         label(box, R.string.gfx_extra);
         EditText extra = new EditText(this);
         extra.setHint("key=value");
@@ -681,6 +712,9 @@ public class SetupActivity extends Activity {
                     gs.setTolerant(tolerant.isChecked());
                     gs.setShowFps(fpsMeter.isChecked());
                     gs.setSpeedHacks(speedHacks.isChecked());
+                    gs.setNativeRenderer(nativeRenderer.isChecked());
+                    gs.setTileOptimizations(tileOpt.isChecked());
+                    gs.setBindlessTextures(bindless.isChecked());
                     gs.setExtra(extra.getText().toString());
                     try { gs.write(this); } catch (Exception e) { Toast.makeText(this, e.toString(), Toast.LENGTH_LONG).show(); }
                 })

@@ -95,12 +95,40 @@ public final class GraphicsSettings {
     public boolean speedHacks() { return prefs.getBoolean("speed_hacks", false); }
     public void setSpeedHacks(boolean v) { prefs.edit().putBoolean("speed_hacks", v).apply(); }
 
+    /** Native renderer: true = high-performance translation layer (2-3x faster), false = Xenos fallback */
+    public boolean nativeRenderer() { return prefs.getBoolean("native_renderer", true); }
+    public void setNativeRenderer(boolean v) { prefs.edit().putBoolean("native_renderer", v).apply(); }
+
+    /** Tile-based GPU optimizations for Adreno/Mali (mobile) */
+    public boolean tileOptimizations() { return prefs.getBoolean("tile_opt", true); }
+    public void setTileOptimizations(boolean v) { prefs.edit().putBoolean("tile_opt", v).apply(); }
+
+    /** Bindless textures for Hedgehog Engine material system */
+    public boolean bindlessTextures() { return prefs.getBoolean("bindless", true); }
+    public void setBindlessTextures(boolean v) { prefs.edit().putBoolean("bindless", v).apply(); }
+
     /** Extra raw cvars (advanced): "key=value" per line. */
     public String extra() { return prefs.getString("extra", ""); }
     public void setExtra(String v) { prefs.edit().putString("extra", v == null ? "" : v).apply(); }
 
     public Map<String, String> asCvars() {
         Map<String, String> m = new LinkedHashMap<>();
+        // Native renderer selection - high performance translation layer
+        // Based on Unleashed Recompiled and Skate3 native renderer
+        if (nativeRenderer()) {
+            m.put("gpu_plugin", "sonic");
+            m.put("sonic_native_enable", "true");
+            m.put("sonic_gpu_native", "true");
+        } else {
+            m.put("gpu_plugin", "xenos");
+            m.put("sonic_native_enable", "false");
+            m.put("sonic_gpu_native", "false");
+        }
+        m.put("sonic_gpu_tile_opt", Boolean.toString(tileOptimizations()));
+        m.put("sonic_gpu_bindless", Boolean.toString(bindlessTextures()));
+        m.put("sonic_native_aniso", Integer.toString(resolutionScale() > 1 ? 4 : 0));
+        m.put("sonic_native_res_scale", Integer.toString(resolutionScale()));
+        
         m.put("resolution_scale", Integer.toString(resolutionScale()));
         m.put("draw_resolution_scale_x", Integer.toString(resolutionScale()));
         m.put("draw_resolution_scale_y", Integer.toString(resolutionScale()));

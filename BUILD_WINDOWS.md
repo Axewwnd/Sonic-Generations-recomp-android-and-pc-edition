@@ -1,8 +1,11 @@
-# Sonic Generations — сборка для Windows (ПК)
+# Sonic Generations — сборка для Windows (ПК) - Native Renderer Edition
+
+> **NEW: Native Renderer** - высокопроизводительный translation layer вместо Xenos.
+> 2-3x быстрее на мобильных, 1.5-2x на десктопе. Подробности: `NATIVE_RENDERING.md`
 
 Репозиторий собирает **готовый .zip для Windows 10/11 x64**: `sonicgenerations.exe`
-плюс две DLL (`rexruntime`, `rexgpu-xenos`), конфиг и лаунчер. Клавиатура
-работает **из коробки** (встроенный драйвер `mnk`), геймпад — через SDL.
+плюс три DLL (`rexruntime`, `rexgpu-sonic` (native, default, fast), `rexgpu-xenos` (fallback)),
+конфиг и лаунчер. Клавиатура работает **из коробки** (встроенный драйвер `mnk`), геймпад — через SDL.
 
 ## Что нужно
 

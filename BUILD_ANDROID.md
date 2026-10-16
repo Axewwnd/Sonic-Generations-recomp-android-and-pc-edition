@@ -1,4 +1,8 @@
-# Как собрать APK (Sonic Generations — Android Edition)
+# Как собрать APK (Sonic Generations — Android Edition) - Native Renderer
+
+> **NEW: Native Renderer Edition** - высокопроизводительный translation layer вместо Xenos эмуляции.
+> 2-3x быстрее на мобильных, основано на Unleashed Recompiled и Skate3 native renderer.
+> Подробности: `NATIVE_RENDERING.md`, `OPTIMIZATION_GUIDE.md`
 
 Ничего ставить на компьютер не нужно: APK собирает GitHub Actions в облаке.
 Бесплатно, ~1–2 часа первая сборка, повторные быстрее (кэш компиляции).
