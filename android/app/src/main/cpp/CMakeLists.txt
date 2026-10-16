@@ -84,6 +84,9 @@ set(SONIC_NATIVE_SOURCES
     "${REX_PORT_DIR}/src/native/hedgehog/mirage_translator.cpp"
     "${REX_PORT_DIR}/src/native/hedgehog/shader_translator.cpp"
     "${REX_PORT_DIR}/src/native/hedgehog/shader_cache.cpp"
+    "${REX_PORT_DIR}/src/native/hedgehog/shader_cache_data.cpp"
+    "${REX_PORT_DIR}/src/native/thirdparty/zstd/zstddeclib.c"
+    "${REX_PORT_DIR}/src/native/thirdparty/smol-v/smolv.cpp"
     "${REX_PORT_DIR}/src/native/rhi/vulkan/vulkan_rhi.cpp"
     "${REX_PORT_DIR}/src/native/rhi/null/null_rhi.h"
     "${REX_PORT_DIR}/src/native/optimizations/xenos_optimizations.cpp"
@@ -93,11 +96,24 @@ set(SONIC_NATIVE_SOURCES
 add_library(sonic_native STATIC ${SONIC_NATIVE_SOURCES})
 target_include_directories(sonic_native PRIVATE
     "${REX_PORT_DIR}" "${REX_PORT_DIR}/src" "${REX_GEN_DIR}"
+    "${REX_PORT_DIR}/src/native/thirdparty/zstd"
+    "${REX_PORT_DIR}/src/native/thirdparty/smol-v"
     "${REXSDK_DIR}/include" "${REXSDK_DIR}/src")
 target_compile_options(sonic_native PRIVATE
     -O3 -fomit-frame-pointer
     -Wno-unused-variable -Wno-unused-parameter -Wno-missing-field-initializers)
 target_link_libraries(sonic_native PUBLIC rex::runtime)
+
+# Large shader cache file - compile with -O0 to avoid OOM and speed up build
+# 24MB C++ file with 6404 entries + 6.6MB compressed blob as byte array
+set_source_files_properties(
+    "${REX_PORT_DIR}/src/native/hedgehog/shader_cache_data.cpp"
+    PROPERTIES COMPILE_FLAGS "-O0 -g0"
+)
+set_source_files_properties(
+    "${REX_PORT_DIR}/src/native/thirdparty/zstd/zstddeclib.c"
+    PROPERTIES COMPILE_FLAGS "-O2 -g0 -DZSTD_DISABLE_ASM"
+)
 # Vulkan from NDK
 find_package(Vulkan QUIET)
 if(Vulkan_FOUND)

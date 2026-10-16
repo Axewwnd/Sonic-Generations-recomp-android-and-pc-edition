@@ -176,45 +176,6 @@ void NativeRenderer::SetNativeRenderingEnabled(bool enabled) {
     }
 }
 
-// Sonic GPU Plugin
-SonicGPUPlugin& SonicGPUPlugin::Get() {
-    static SonicGPUPlugin instance;
-    return instance;
-}
-
-bool SonicGPUPlugin::Initialize(void* windowHandle) {
-    if (initialized_) return true;
-    
-    NativeRendererConfig config;
-    config.enableNativeRendering = true;
-    config.enableBindlessTextures = true;
-    config.enableTileBasedOptimizations = true;
-    
-    bool result = NativeRenderer::Get().Initialize(windowHandle, config);
-    if (result) {
-        useNativePath_ = NativeRenderer::Get().IsNativeRenderingEnabled();
-        initialized_ = true;
-        REXLOG_INFO("SonicGPUPlugin: initialized, using {} path",
-                    useNativePath_ ? "NATIVE" : "XENOS fallback");
-    }
-    
-    return result;
-}
-
-void SonicGPUPlugin::Shutdown() {
-    if (!initialized_) return;
-    NativeRenderer::Get().Shutdown();
-    initialized_ = false;
-}
-
-void SonicGPUPlugin::OnCreateTexture(void* guestTexture) {
-    // Hook for texture creation
-}
-
-void SonicGPUPlugin::OnDrawCall() {
-    // Hook for draw calls
-}
-
 std::unique_ptr<RHIDevice> CreateRHIDeviceForPlatform(void* windowHandle) {
     (void)windowHandle;
     // Try Vulkan first (works on Android and Windows)
