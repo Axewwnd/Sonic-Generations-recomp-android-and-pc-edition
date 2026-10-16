@@ -62,6 +62,7 @@ set(SONIC_NATIVE_SOURCES
     "${REX_PORT_DIR}/src/native/native_renderer.cpp"
     "${REX_PORT_DIR}/src/native/hedgehog/mirage_translator.cpp"
     "${REX_PORT_DIR}/src/native/hedgehog/shader_translator.cpp"
+    "${REX_PORT_DIR}/src/native/hedgehog/shader_cache.cpp"
     "${REX_PORT_DIR}/src/native/rhi/vulkan/vulkan_rhi.cpp"
     "${REX_PORT_DIR}/src/native/rhi/null/null_rhi.h"
     "${REX_PORT_DIR}/src/native/optimizations/xenos_optimizations.cpp"

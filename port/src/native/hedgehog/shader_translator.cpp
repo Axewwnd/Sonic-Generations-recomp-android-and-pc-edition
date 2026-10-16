@@ -1,7 +1,9 @@
 // Xbox 360 Shader Translator Implementation
 // Based on XenosRecomp but simplified and optimized for Sonic Generations
+// Now with shader cache support from artifact 10770056313
 
 #include "shader_translator.h"
+#include "shader_cache.h"
 #include <cstring>
 #include <sstream>
 #include <iomanip>
@@ -74,13 +76,22 @@ ShaderTranslator& ShaderTranslator::Get() {
 }
 
 bool ShaderTranslator::Initialize() {
-    REXLOG_INFO("ShaderTranslator: initializing");
+    REXLOG_INFO("ShaderTranslator: initializing with XenosRecomp + shader cache");
+    
+    // Initialize shader cache (from artifact 10770056313)
+    ShaderCache::Get().Initialize();
+    
     PrecompileCommonShaders();
+    
+    REXLOG_INFO("ShaderTranslator: initialized, cache size {}, embedded cache complete={}",
+                cache_.size(), ShaderCache::Get().IsComplete() ? "YES" : "NO (need shader_cache.cpp)");
+    
     return true;
 }
 
 void ShaderTranslator::Shutdown() {
     ClearCache();
+    ShaderCache::Get().Shutdown();
     REXLOG_INFO("ShaderTranslator: shutdown, cache size was {}", cache_.size());
 }
 
@@ -119,6 +130,29 @@ std::unique_ptr<TranslatedShader> ShaderTranslator::Translate(const void* xboxBy
             auto copy = std::make_unique<TranslatedShader>(*it->second);
             return copy;
         }
+    }
+    
+    // Try precompiled cache first (from XenosRecomp artifact 10770056313)
+    if (auto* cached = ShaderCache::Get().Find(hash)) {
+        stats_.cacheHits++;
+        REXLOG_INFO("ShaderTranslator: found shader {:x} in precompiled cache ({} bytes SPIR-V)", 
+                    hash, cached->spirvSize);
+        
+        auto translated = std::make_unique<TranslatedShader>();
+        if (cached->spirv && cached->spirvSize > 0) {
+            translated->spirvBytecode.assign(cached->spirv, cached->spirv + cached->spirvSize / 4);
+        }
+        if (cached->dxil && cached->dxilSize > 0) {
+            translated->dxilBytecode.assign(cached->dxil, cached->dxil + cached->dxilSize);
+        }
+        translated->hlslSource = "// From precompiled cache\n";
+        
+        {
+            std::lock_guard<std::mutex> lock(cacheMutex_);
+            cache_[hash] = std::make_unique<TranslatedShader>(*translated);
+        }
+        
+        return translated;
     }
     
     stats_.cacheMisses++;
