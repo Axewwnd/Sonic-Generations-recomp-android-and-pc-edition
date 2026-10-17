@@ -54,19 +54,10 @@ jobs:
           rm -rf cmdline-tools-tmp cmdline-tools.zip
           ls cmdline-tools/latest/bin/
 
-      - name: Accept Android SDK licenses
-        run: |
-          mkdir -p $ANDROID_SDK_ROOT/licenses
-          echo "### Baseline Template for Android SDK licenses" > $ANDROID_SDK_ROOT/licenses/android-sdk-license
-          echo "d56f5187479451eabf01fb78af6df4131768b402" >> $ANDROID_SDK_ROOT/licenses/android-sdk-license
-          echo "### Baseline Template for Android SDK preview licenses" > $ANDROID_SDK_ROOT/licenses/android-sdk-preview-license
-          echo "84831b9409646a918e30573bab4c9c91346d8abd" >> $ANDROID_SDK_ROOT/licenses/android-sdk-preview-license
-          echo "Licencias aceptadas"
-
-      - name: Install SDK components
+      - name: Install SDK components (accept licenses automatically)
         run: |
           export PATH=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$PATH
-          sdkmanager --sdk_root=$ANDROID_SDK_ROOT \
+          yes | sdkmanager --sdk_root=$ANDROID_SDK_ROOT \
             "platform-tools" \
             "platforms;android-35" \
             "build-tools;35.0.0" \
@@ -84,7 +75,7 @@ jobs:
       - name: Create local.properties for Gradle
         run: |
           echo "sdk.dir=$ANDROID_SDK_ROOT" > android/local.properties
-          echo "ndk.dir=$ANDROID_NDK_ROOT" >> android/local.properties
+          # ndk.dir se deja fuera: Gradle lo toma de ANDROID_NDK_ROOT / ANDROID_NDK_HOME
           cat android/local.properties
 
       - name: Prepare rexglue-sdk and Android patches (android_sdk.sh)
