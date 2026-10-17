@@ -9,6 +9,9 @@ jobs:
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 360
+    env:
+      ANDROID_SDK_ROOT: /home/runner/android-sdk
+      ANDROID_NDK_ROOT: /home/runner/android-sdk/ndk/27.2.12479018
 
     steps:
       - name: Checkout repository
@@ -22,28 +25,42 @@ jobs:
 
       - name: Install Android SDK command-line tools
         run: |
-          mkdir -p $HOME/android-sdk
-          cd $HOME/android-sdk
+          mkdir -p $ANDROID_SDK_ROOT
+          cd $ANDROID_SDK_ROOT
           wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O cmdline-tools.zip
           unzip -q cmdline-tools.zip
-          mkdir -p cmdline-tools/latest
-          # cmdline-tools descomprime directamente el contenido; mover a latest si existe carpeta cmdline-tools
-          if [ -d "$HOME/android-sdk/cmdline-tools" ] && [ ! -d "$HOME/android-sdk/cmdline-tools/latest" ]; then
-            mv "$HOME/android-sdk/cmdline-tools" "$HOME/android-sdk/cmdline-tools/latest"
+          # cmdline-tools se descompone como cmdline-tools/bin/... directamente
+          # Crear la estructura esperada: cmdline-tools/latest/bin/
+          if [ -d "cmdline-tools" ] && [ ! -d "cmdline-tools/latest" ]; then
+            mv cmdline-tools cmdline-tools/latest
           fi
-          export ANDROID_SDK_ROOT=$HOME/android-sdk
-          yes | "$HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager" --sdk_root="$HOME/android-sdk" \
+          rm -f cmdline-tools.zip
+          ls cmdline-tools/latest/bin/
+
+      - name: Accept Android SDK licenses
+        run: |
+          mkdir -p $ANDROID_SDK_ROOT/licenses
+          echo "### Baseline Template for Android SDK licenses" > $ANDROID_SDK_ROOT/licenses/android-sdk-license
+          echo "d56f5187479451eabf01fb78af6df4131768b402" >> $ANDROID_SDK_ROOT/licenses/android-sdk-license
+          echo "### Baseline Template for Android SDK preview licenses" > $ANDROID_SDK_ROOT/licenses/android-sdk-preview-license
+          echo "84831b9409646a918e30573bab4c9c91346d8abd" >> $ANDROID_SDK_ROOT/licenses/android-sdk-preview-license
+          echo "Licencias aceptadas"
+
+      - name: Install SDK components
+        run: |
+          export PATH=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$PATH
+          sdkmanager --sdk_root=$ANDROID_SDK_ROOT \
             "platform-tools" \
             "platforms;android-35" \
             "build-tools;35.0.0" \
             "cmake;3.31.1" \
             "ndk;27.2.12479018"
 
-      - name: Export Android environment variables
+      - name: Export environment variables
         run: |
-          echo "ANDROID_SDK_ROOT=$HOME/android-sdk" >> $GITHUB_ENV
-          echo "ANDROID_NDK_ROOT=$HOME/android-sdk/ndk/27.2.12479018" >> $GITHUB_ENV
-          echo "PATH=$HOME/android-sdk/cmdline-tools/latest/bin:$HOME/android-sdk/platform-tools:$PATH" >> $GITHUB_ENV
+          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT" >> $GITHUB_ENV
+          echo "ANDROID_NDK_ROOT=$ANDROID_NDK_ROOT" >> $GITHUB_ENV
+          echo "PATH=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$PATH" >> $GITHUB_ENV
 
       - name: Prepare rexglue-sdk and Android patches (android_sdk.sh)
         run: |
@@ -53,6 +70,7 @@ jobs:
       - name: Build APK (debug, no signing keystore required)
         run: |
           cd android
+          chmod +x gradlew
           ./gradlew assembleDebug \
             -PrexName=sonicgenerations \
             -PrexPortDir=$PWD/../port \
