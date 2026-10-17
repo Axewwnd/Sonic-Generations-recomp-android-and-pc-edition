@@ -1,0 +1,70 @@
+name: Build Sonic Generations Recomp Android APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Install Android SDK command-line tools
+        run: |
+          mkdir -p $HOME/android-sdk
+          cd $HOME/android-sdk
+          wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O cmdline-tools.zip
+          unzip -q cmdline-tools.zip
+          mkdir -p cmdline-tools/latest
+          # cmdline-tools descomprime directamente el contenido; mover a latest si existe carpeta cmdline-tools
+          if [ -d "$HOME/android-sdk/cmdline-tools" ] && [ ! -d "$HOME/android-sdk/cmdline-tools/latest" ]; then
+            mv "$HOME/android-sdk/cmdline-tools" "$HOME/android-sdk/cmdline-tools/latest"
+          fi
+          export ANDROID_SDK_ROOT=$HOME/android-sdk
+          yes | "$HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager" --sdk_root="$HOME/android-sdk" \
+            "platform-tools" \
+            "platforms;android-35" \
+            "build-tools;35.0.0" \
+            "cmake;3.31.1" \
+            "ndk;27.2.12479018"
+
+      - name: Export Android environment variables
+        run: |
+          echo "ANDROID_SDK_ROOT=$HOME/android-sdk" >> $GITHUB_ENV
+          echo "ANDROID_NDK_ROOT=$HOME/android-sdk/ndk/27.2.12479018" >> $GITHUB_ENV
+          echo "PATH=$HOME/android-sdk/cmdline-tools/latest/bin:$HOME/android-sdk/platform-tools:$PATH" >> $GITHUB_ENV
+
+      - name: Prepare rexglue-sdk and Android patches (android_sdk.sh)
+        run: |
+          chmod +x android_sdk.sh
+          bash android_sdk.sh android/sdk/rexglue-sdk
+
+      - name: Build APK (debug, no signing keystore required)
+        run: |
+          cd android
+          ./gradlew assembleDebug \
+            -PrexName=sonicgenerations \
+            -PrexPortDir=$PWD/../port \
+            -PrexSdkDir=$PWD/sdk/rexglue-sdk
+        env:
+          ANDROID_SDK_ROOT: ${{ env.ANDROID_SDK_ROOT }}
+          ANDROID_NDK_ROOT: ${{ env.ANDROID_NDK_ROOT }}
+          GRADLE_OPTS: -Dorg.gradle.jvmargs=-Xmx4096m -Dorg.gradle.parallel=false -Dorg.gradle.caching=true
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sonic-generations-apk
+          path: android/app/build/outputs/apk/debug/*.apk
+          retention-days: 7
