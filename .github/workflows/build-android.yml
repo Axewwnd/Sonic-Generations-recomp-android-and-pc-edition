@@ -108,6 +108,9 @@ jobs:
           ANDROID_SDK_ROOT: ${{ env.ANDROID_SDK_ROOT }}
           ANDROID_NDK_ROOT: ${{ env.ANDROID_NDK_ROOT }}
           ANDROID_NDK_HOME: ${{ env.ANDROID_NDK_HOME }}
+          # Snapdragon 680 (Kryo 265 = Cortex-A75/A55) NO soporta armv8.2-a+dotprod.
+          # Sin esto, librexruntime.so contiene instrucciones SDOT/UDOT -> SIGILL al arrancar.
+          REX_ANDROID_BASELINE_ARM: 1
           GRADLE_OPTS: -Dorg.gradle.jvmargs=-Xmx4096m -Dorg.gradle.parallel=false -Dorg.gradle.caching=true
 
       - name: Verify APK was generated
