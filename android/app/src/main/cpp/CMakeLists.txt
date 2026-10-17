@@ -144,7 +144,7 @@ add_library(rexgpu-sonic SHARED
 target_include_directories(rexgpu-sonic PRIVATE
     "${REX_PORT_DIR}" "${REX_PORT_DIR}/src"
     "${REXSDK_DIR}/include" "${REXSDK_DIR}/src")
-target_link_libraries(rexgpu-sonic PRIVATE rex::runtime rexgraphics)
+target_link_libraries(rexgpu-sonic PRIVATE rex::runtime)
 target_compile_options(rexgpu-sonic PRIVATE -O3 -fvisibility=hidden -Wno-unused-variable)
 set_target_properties(rexgpu-sonic PROPERTIES
     CXX_VISIBILITY_PRESET hidden
