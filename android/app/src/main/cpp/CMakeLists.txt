@@ -123,14 +123,14 @@ set_target_properties(sonic_native PROPERTIES INTERPROCEDURAL_OPTIMIZATION OFF)
 set_source_files_properties(
     "${REX_PORT_DIR}/src/native/hedgehog/shader_cache_data.cpp"
     PROPERTIES 
-    COMPILE_OPTIONS "-O0 -g0"
+    COMPILE_OPTIONS "-O0;-g0"
     SKIP_PRECOMPILE_HEADERS ON
 )
 # Also stub needs no LTO
 set_source_files_properties(
     "${REX_PORT_DIR}/src/native/hedgehog/shader_cache_data_stub.cpp"
     PROPERTIES 
-    COMPILE_OPTIONS "-O0 -g0"
+    COMPILE_OPTIONS "-O0;-g0"
     SKIP_PRECOMPILE_HEADERS ON
 )
 set_source_files_properties(
