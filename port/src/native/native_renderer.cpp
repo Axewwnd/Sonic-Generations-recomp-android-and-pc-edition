@@ -13,8 +13,8 @@
 REXCVAR_DEFINE_BOOL(sonic_native_enable, true, "Sonic/Native", "Enable native rendering path (vs Xenos emulation)");
 REXCVAR_DEFINE_BOOL(sonic_native_bindless, true, "Sonic/Native", "Enable bindless textures");
 REXCVAR_DEFINE_BOOL(sonic_native_tile_opt, true, "Sonic/Native", "Enable tile-based GPU optimizations for mobile");
-REXCVAR_DEFINE_INT(sonic_native_aniso, 4, "Sonic/Native", "Anisotropy level (0-16)");
-REXCVAR_DEFINE_INT(sonic_native_res_scale, 1, "Sonic/Native", "Resolution scale (1-4)");
+REXCVAR_DEFINE_INT32(sonic_native_aniso, 4, "Sonic/Native", "Anisotropy level (0-16)");
+REXCVAR_DEFINE_INT32(sonic_native_res_scale, 1, "Sonic/Native", "Resolution scale (1-4)");
 
 namespace sonic_native {
 
@@ -32,11 +32,11 @@ bool NativeRenderer::Initialize(void* windowHandle, const NativeRendererConfig& 
     config_ = config;
     
     // Override from cvars
-    config_.enableNativeRendering = sonic_native_enable;
-    config_.enableBindlessTextures = sonic_native_bindless;
-    config_.enableTileBasedOptimizations = sonic_native_tile_opt;
-    config_.maxAnisotropy = sonic_native_aniso;
-    config_.resolutionScale = sonic_native_res_scale;
+    config_.enableNativeRendering = REXCVAR_GET(sonic_native_enable);
+    config_.enableBindlessTextures = REXCVAR_GET(sonic_native_bindless);
+    config_.enableTileBasedOptimizations = REXCVAR_GET(sonic_native_tile_opt);
+    config_.maxAnisotropy = REXCVAR_GET(sonic_native_aniso);
+    config_.resolutionScale = REXCVAR_GET(sonic_native_res_scale);
     
     if (!config_.enableNativeRendering) {
         REXLOG_INFO("NativeRenderer: native rendering disabled via config, using Xenos fallback");

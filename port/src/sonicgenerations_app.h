@@ -9,8 +9,8 @@
 #include <rex/logging.h>
 
 // Native renderer cvars - allow toggling at runtime like Skate3
-REXCVAR_DECLARE_BOOL(sonic_native_enable);
-REXCVAR_DECLARE_BOOL(sonic_gpu_native);
+REXCVAR_DECLARE(bool, sonic_native_enable);
+REXCVAR_DECLARE(bool, sonic_gpu_native);
 
 class SonicgenerationsApp : public rex::ReXApp {
  public:
@@ -60,9 +60,9 @@ class SonicgenerationsApp : public rex::ReXApp {
 
   void OnPostSetup() override {
     REXLOG_INFO("SonicGenerationsApp: post-setup, native renderer active: {}",
-                sonic_native_enable ? "YES" : "NO (Xenos fallback)");
+                REXCVAR_GET(sonic_native_enable) ? "YES" : "NO (Xenos fallback)");
     
-    if (sonic_native_enable) {
+    if (REXCVAR_GET(sonic_native_enable)) {
       REXLOG_INFO("  Native rendering translation layer is ACTIVE");
       REXLOG_INFO("  - Bypassing Xenos EDRAM emulation");
       REXLOG_INFO("  - Direct Hedgehog Engine -> Vulkan translation");

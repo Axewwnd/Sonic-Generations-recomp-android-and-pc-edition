@@ -10,11 +10,15 @@
 REXCVAR_DEFINE_BOOL(sonic_gpu_native, true, "Sonic/GPU", "Use native rendering (true) or optimized Xenos (false)");
 REXCVAR_DEFINE_BOOL(sonic_gpu_tile_opt, true, "Sonic/GPU", "Enable tile-based optimizations for mobile GPUs");
 REXCVAR_DEFINE_BOOL(sonic_gpu_bindless, true, "Sonic/GPU", "Enable bindless textures");
-REXCVAR_DEFINE_BOOL(sonic_native_enable, true, "Sonic/Native", "Enable native rendering path");
-REXCVAR_DEFINE_INT(sonic_native_aniso, 4, "Sonic/Native", "Anisotropy level");
-REXCVAR_DEFINE_INT(sonic_native_res_scale, 1, "Sonic/Native", "Resolution scale");
 REXCVAR_DEFINE_BOOL(sonic_native_vsync, true, "Sonic/Native", "VSync");
 REXCVAR_DEFINE_BOOL(sonic_native_async_shaders, true, "Sonic/Native", "Async shader compilation");
+
+// Native cvars defined in native_renderer.cpp - declare for use here
+REXCVAR_DECLARE(bool, sonic_native_enable);
+REXCVAR_DECLARE(bool, sonic_native_bindless);
+REXCVAR_DECLARE(bool, sonic_native_tile_opt);
+REXCVAR_DECLARE(int32_t, sonic_native_aniso);
+REXCVAR_DECLARE(int32_t, sonic_native_res_scale);
 
 namespace sonic_native {
 namespace gpu {
@@ -175,12 +179,12 @@ REX_GPU_PLUGIN_EXPORT rex::system::IGraphicsSystem* rex_gpu_create(
     REXLOG_INFO("  High-performance native rendering plugin for Sonic Generations");
     REXLOG_INFO("  Bypasses Xenos emulation, translates Hedgehog Engine directly to Vulkan");
     
-    bool useNative = sonic_gpu_native;
+    bool useNative = REXCVAR_GET(sonic_gpu_native);
     
     if (backend == "sonic-xenos") {
         useNative = false;
     } else if (backend == "sonic" || backend == "any" || backend == "vulkan") {
-        useNative = sonic_gpu_native;
+        useNative = REXCVAR_GET(sonic_gpu_native);
     }
     
     REXLOG_INFO("rexgpu-sonic: using {} path", useNative ? "NATIVE" : "OPTIMIZED XENOS");
