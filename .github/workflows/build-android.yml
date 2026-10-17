@@ -2,6 +2,11 @@ name: Build Sonic Generations Recomp Android APK
 
 on:
   workflow_dispatch:
+    inputs:
+      xex_url:
+        description: 'URL opcional para descargar default.xex (material con derechos de autor - usted es responsable de obtenerlo legalmente)'
+        required: false
+        default: ''
   push:
     branches: [main]
 
@@ -29,8 +34,6 @@ jobs:
           cd $ANDROID_SDK_ROOT
           wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O cmdline-tools.zip
           unzip -q cmdline-tools.zip
-          # cmdline-tools se descompone como cmdline-tools/bin/... directamente
-          # Crear la estructura esperada: cmdline-tools/latest/bin/
           if [ -d "cmdline-tools" ] && [ ! -d "cmdline-tools/latest" ]; then
             mv cmdline-tools cmdline-tools/latest
           fi
@@ -66,6 +69,15 @@ jobs:
         run: |
           chmod +x android_sdk.sh
           bash android_sdk.sh android/sdk/rexglue-sdk
+
+      - name: Download default.xex (optional - provided by user)
+        if: github.event.inputs.xex_url != ''
+        run: |
+          echo "Descargando default.xex desde URL proporcionada por el usuario..."
+          mkdir -p port/_temp/input/dl
+          curl -L -o port/_temp/input/dl/default.xex "${{ github.event.inputs.xex_url }}"
+          ls -lh port/_temp/input/dl/default.xex
+          echo "default.xex descargado en port/_temp/input/dl/default.xex"
 
       - name: Build APK (debug, no signing keystore required)
         run: |
