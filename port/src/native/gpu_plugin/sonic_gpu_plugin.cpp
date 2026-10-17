@@ -6,6 +6,9 @@
 #include "sonic_gpu_plugin.h"
 #include <rex/logging.h>
 #include <rex/cvar.h>
+#include <rex/ui/windowed_app_context.h>
+#include <rex/ui/graphics_provider.h>
+#include <rex/ui/presenter.h>
 
 REXCVAR_DEFINE_BOOL(sonic_gpu_native, true, "Sonic/GPU", "Use native rendering (true) or optimized Xenos (false)");
 REXCVAR_DEFINE_BOOL(sonic_gpu_tile_opt, true, "Sonic/GPU", "Enable tile-based optimizations for mobile GPUs");
@@ -32,7 +35,7 @@ SonicGraphicsSystem::~SonicGraphicsSystem() {
     Shutdown();
 }
 
-rex::system::X_STATUS SonicGraphicsSystem::SetupPresentation(rex::ui::WindowedAppContext* app_context) {
+rex::X_STATUS SonicGraphicsSystem::SetupPresentation(rex::ui::WindowedAppContext* app_context) {
     REXLOG_INFO("SonicGraphicsSystem::SetupPresentation - native={}", useNativeRendering_);
     
     if (useNativeRendering_) {
@@ -55,7 +58,7 @@ rex::system::X_STATUS SonicGraphicsSystem::SetupPresentation(rex::ui::WindowedAp
             }
         }
         
-        return rex::system::X_STATUS_SUCCESS;
+        return X_STATUS_SUCCESS;
     } else {
         REXLOG_INFO("SonicGraphicsSystem: using optimized Xenos path");
         hasPresentation_ = true;
@@ -69,11 +72,11 @@ rex::system::X_STATUS SonicGraphicsSystem::SetupPresentation(rex::ui::WindowedAp
                 }
             }
         }
-        return rex::system::X_STATUS_SUCCESS;
+        return X_STATUS_SUCCESS;
     }
 }
 
-rex::system::X_STATUS SonicGraphicsSystem::SetupGuestGpu(
+rex::X_STATUS SonicGraphicsSystem::SetupGuestGpu(
     rex::runtime::FunctionDispatcher* function_dispatcher,
     rex::system::KernelState* kernel_state) {
     
@@ -84,13 +87,13 @@ rex::system::X_STATUS SonicGraphicsSystem::SetupGuestGpu(
         REXLOG_INFO("  Game uses Hedgehog Engine -> Vulkan translation layer");
         REXLOG_INFO("  No ring buffer, no EDRAM, no PM4 - direct translation");
         REXLOG_INFO("  This is the high-performance path from Unleashed Recompiled");
-        return rex::system::X_STATUS_SUCCESS;
+        return X_STATUS_SUCCESS;
     } else {
         REXLOG_INFO("SonicGraphicsSystem: optimized Xenos GPU setup with mobile optimizations");
         REXLOG_INFO("  - Tile-based optimizations: merge passes, transient depth");
         REXLOG_INFO("  - Bindless textures for Hedgehog material system");
         REXLOG_INFO("  - Async shader compilation");
-        return rex::system::X_STATUS_SUCCESS;
+        return X_STATUS_SUCCESS;
     }
 }
 

@@ -9,8 +9,13 @@
 
 #include <rex/system/interfaces/graphics.h>
 #include <rex/system/gpu_plugin.h>
+#include <rex/system/xtypes.h>
+#include <rex/ui/windowed_app_context.h>
+#include <rex/ui/graphics_provider.h>
+#include <rex/ui/presenter.h>
 #include <memory>
 #include <string>
+#include <filesystem>
 
 namespace sonic_native {
 namespace gpu {
@@ -25,9 +30,9 @@ public:
     ~SonicGraphicsSystem() override;
     
     // IGraphicsSystem interface
-    rex::system::X_STATUS SetupPresentation(rex::ui::WindowedAppContext* app_context) override;
-    rex::system::X_STATUS SetupGuestGpu(rex::runtime::FunctionDispatcher* function_dispatcher,
-                                        rex::system::KernelState* kernel_state) override;
+    rex::X_STATUS SetupPresentation(rex::ui::WindowedAppContext* app_context) override;
+    rex::X_STATUS SetupGuestGpu(rex::runtime::FunctionDispatcher* function_dispatcher,
+                                rex::system::KernelState* kernel_state) override;
     bool has_presentation() const override { return hasPresentation_; }
     
     rex::ui::GraphicsProvider* provider() const override { return provider_.get(); }
