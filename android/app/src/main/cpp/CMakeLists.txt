@@ -79,12 +79,23 @@ target_link_libraries(recomp PUBLIC rex::runtime rexui)
 # Implements Hedgehog Engine -> Vulkan direct translation
 # Based on Unleashed Recompiled and Skate3 native renderer
 
+# For Android CI, use stub cache to avoid 24MB file OOM (real cache is 6404 shaders, 24MB)
+# Real cache can be enabled via -DSONIC_USE_REAL_SHADER_CACHE=ON or env var
+# Windows build uses real cache with /bigobj and -O0
+if(DEFINED ENV{SONIC_USE_REAL_SHADER_CACHE} OR SONIC_USE_REAL_SHADER_CACHE)
+    set(SHADER_CACHE_DATA "${REX_PORT_DIR}/src/native/hedgehog/shader_cache_data.cpp")
+    message(STATUS "Using REAL shader cache (6404 shaders, 24MB) - may OOM on low memory")
+else()
+    set(SHADER_CACHE_DATA "${REX_PORT_DIR}/src/native/hedgehog/shader_cache_data_stub.cpp")
+    message(STATUS "Using STUB shader cache for Android (0 shaders) - avoids 24MB OOM, runtime translation fallback")
+endif()
+
 set(SONIC_NATIVE_SOURCES
     "${REX_PORT_DIR}/src/native/native_renderer.cpp"
     "${REX_PORT_DIR}/src/native/hedgehog/mirage_translator.cpp"
     "${REX_PORT_DIR}/src/native/hedgehog/shader_translator.cpp"
     "${REX_PORT_DIR}/src/native/hedgehog/shader_cache.cpp"
-    "${REX_PORT_DIR}/src/native/hedgehog/shader_cache_data.cpp"
+    "${SHADER_CACHE_DATA}"
     "${REX_PORT_DIR}/src/native/thirdparty/zstd/zstddeclib.c"
     "${REX_PORT_DIR}/src/native/thirdparty/smol-v/smolv.cpp"
     "${REX_PORT_DIR}/src/native/rhi/vulkan/vulkan_rhi.cpp"
@@ -103,12 +114,14 @@ target_compile_options(sonic_native PRIVATE
     -Wno-unused-variable -Wno-unused-parameter -Wno-missing-field-initializers)
 target_link_libraries(sonic_native PUBLIC rex::runtime)
 
-# Large shader cache file - compile with -O0 to avoid OOM and speed up build
+# Large shader cache file - compile with -O0 to avoid OOM (only for real cache)
 # 24MB C++ file with 6404 entries + 6.6MB compressed blob as byte array
-set_source_files_properties(
-    "${REX_PORT_DIR}/src/native/hedgehog/shader_cache_data.cpp"
-    PROPERTIES COMPILE_OPTIONS "-O0"
-)
+if(EXISTS "${REX_PORT_DIR}/src/native/hedgehog/shader_cache_data.cpp")
+    set_source_files_properties(
+        "${REX_PORT_DIR}/src/native/hedgehog/shader_cache_data.cpp"
+        PROPERTIES COMPILE_OPTIONS "-O0"
+    )
+endif()
 set_source_files_properties(
     "${REX_PORT_DIR}/src/native/thirdparty/zstd/zstddeclib.c"
     PROPERTIES 
