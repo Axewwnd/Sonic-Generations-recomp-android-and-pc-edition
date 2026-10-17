@@ -68,8 +68,8 @@ jobs:
 
       - name: Prepare rexglue-sdk and Android patches (android_sdk.sh)
         run: |
-          chmod +x android_sdk.sh
-          bash android_sdk.sh android/sdk/rexglue-sdk
+          chmod +x tools/android_sdk.sh
+          bash tools/android_sdk.sh android/sdk/rexglue-sdk
 
       - name: Download default.xex (optional - provided by user)
         if: github.event.inputs.xex_url != ''
