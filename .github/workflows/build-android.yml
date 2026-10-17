@@ -18,6 +18,7 @@ jobs:
       ANDROID_HOME: /home/runner/android-sdk
       ANDROID_SDK_ROOT: /home/runner/android-sdk
       ANDROID_NDK_ROOT: /home/runner/android-sdk/ndk/27.2.12479018
+      ANDROID_NDK_HOME: /home/runner/android-sdk/ndk/27.2.12479018
 
     steps:
       - name: Checkout repository
@@ -29,23 +30,43 @@ jobs:
           distribution: temurin
           java-version: 17
 
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('android/gradlew') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Show disk space before build
+        run: df -h / /home
+
       - name: Install Android SDK command-line tools
         run: |
           mkdir -p $ANDROID_SDK_ROOT
           cd $ANDROID_SDK_ROOT
           wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O cmdline-tools.zip
-          # Descomprimir a carpeta temporal para evitar conflicto de rutas
           unzip -q cmdline-tools.zip -d cmdline-tools-tmp
-          # La estructura del zip es: cmdline-tools-tmp/cmdline-tools/bin/...
           mkdir -p cmdline-tools/latest
           mv cmdline-tools-tmp/cmdline-tools/* cmdline-tools/latest/
           rm -rf cmdline-tools-tmp cmdline-tools.zip
           ls cmdline-tools/latest/bin/
 
-      - name: Install SDK components (accepting licenses automatically)
+      - name: Accept Android SDK licenses
+        run: |
+          mkdir -p $ANDROID_SDK_ROOT/licenses
+          echo "### Baseline Template for Android SDK licenses" > $ANDROID_SDK_ROOT/licenses/android-sdk-license
+          echo "d56f5187479451eabf01fb78af6df4131768b402" >> $ANDROID_SDK_ROOT/licenses/android-sdk-license
+          echo "### Baseline Template for Android SDK preview licenses" > $ANDROID_SDK_ROOT/licenses/android-sdk-preview-license
+          echo "84831b9409646a918e30573bab4c9c91346d8abd" >> $ANDROID_SDK_ROOT/licenses/android-sdk-preview-license
+          echo "Licencias aceptadas"
+
+      - name: Install SDK components
         run: |
           export PATH=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$PATH
-          yes | sdkmanager --sdk_root=$ANDROID_SDK_ROOT \
+          sdkmanager --sdk_root=$ANDROID_SDK_ROOT \
             "platform-tools" \
             "platforms;android-35" \
             "build-tools;35.0.0" \
@@ -57,7 +78,14 @@ jobs:
           echo "ANDROID_HOME=$ANDROID_HOME" >> $GITHUB_ENV
           echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT" >> $GITHUB_ENV
           echo "ANDROID_NDK_ROOT=$ANDROID_NDK_ROOT" >> $GITHUB_ENV
+          echo "ANDROID_NDK_HOME=$ANDROID_NDK_HOME" >> $GITHUB_ENV
           echo "PATH=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$PATH" >> $GITHUB_ENV
+
+      - name: Create local.properties for Gradle
+        run: |
+          echo "sdk.dir=$ANDROID_SDK_ROOT" > android/local.properties
+          echo "ndk.dir=$ANDROID_NDK_ROOT" >> android/local.properties
+          cat android/local.properties
 
       - name: Prepare rexglue-sdk and Android patches (android_sdk.sh)
         run: |
@@ -65,13 +93,17 @@ jobs:
           bash tools/android_sdk.sh android/sdk/rexglue-sdk
 
       - name: Download default.xex (optional - provided by user)
-        if: github.event.inputs.xex_url != ''
+        continue-on-error: true
         run: |
-          echo "Descargando default.xex desde URL proporcionada por el usuario..."
-          mkdir -p port/_temp/input/dl
-          curl -L -o port/_temp/input/dl/default.xex "${{ github.event.inputs.xex_url }}"
-          ls -lh port/_temp/input/dl/default.xex
-          echo "default.xex descargado en port/_temp/input/dl/default.xex"
+          if [ -n "${{ github.event.inputs.xex_url }}" ]; then
+            echo "Descargando default.xex desde URL proporcionada por el usuario..."
+            mkdir -p port/_temp/input/dl
+            curl -L -o port/_temp/input/dl/default.xex "${{ github.event.inputs.xex_url }}"
+            ls -lh port/_temp/input/dl/default.xex
+            echo "default.xex descargado en port/_temp/input/dl/default.xex"
+          else
+            echo "No se proporcionó URL de default.xex - se omite la descarga"
+          fi
 
       - name: Build APK (debug, no signing keystore required)
         run: |
@@ -84,7 +116,20 @@ jobs:
         env:
           ANDROID_SDK_ROOT: ${{ env.ANDROID_SDK_ROOT }}
           ANDROID_NDK_ROOT: ${{ env.ANDROID_NDK_ROOT }}
+          ANDROID_NDK_HOME: ${{ env.ANDROID_NDK_HOME }}
           GRADLE_OPTS: -Dorg.gradle.jvmargs=-Xmx4096m -Dorg.gradle.parallel=false -Dorg.gradle.caching=true
+
+      - name: Verify APK was generated
+        run: |
+          if [ ! -f android/app/build/outputs/apk/debug/*.apk ]; then
+            echo "ERROR: No se encontró ningún APK en android/app/build/outputs/apk/debug/"
+            ls -la android/app/build/outputs/apk/debug/ 2>/dev/null || echo "Directorio de salida no existe"
+            exit 1
+          fi
+          ls -lh android/app/build/outputs/apk/debug/*.apk
+
+      - name: Show disk space after build
+        run: df -h / /home
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
