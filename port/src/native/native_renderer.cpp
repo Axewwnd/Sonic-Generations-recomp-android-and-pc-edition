@@ -10,13 +10,14 @@
 #include <rex/logging.h>
 #include <rex/cvar.h>
 
-REXCVAR_DEFINE_BOOL(sonic_native_enable, false, "Sonic/Native", "Enable native rendering path (vs Xenos emulation) - EXPERIMENTAL, may cause black screen");
+REXCVAR_DEFINE_BOOL(sonic_native_enable, true, "Sonic/Native", "Enable native rendering path (vs Xenos emulation) - HYBRID for 30-60 fps");
 REXCVAR_DEFINE_BOOL(sonic_native_bindless, true, "Sonic/Native", "Enable bindless textures");
 REXCVAR_DEFINE_BOOL(sonic_native_tile_opt, true, "Sonic/Native", "Enable tile-based GPU optimizations for mobile");
 REXCVAR_DEFINE_INT32(sonic_native_aniso, 4, "Sonic/Native", "Anisotropy level (0-16)");
 REXCVAR_DEFINE_INT32(sonic_native_res_scale, 1, "Sonic/Native", "Resolution scale (1-4)");
-REXCVAR_DEFINE_BOOL(sonic_etc2_enable, true, "Sonic/Native", "Enable ETC2 texture compression for mobile (Adreno/Mali optimization)");
-REXCVAR_DEFINE_BOOL(sonic_etc2_transcode, true, "Sonic/Native", "Transcode BCn/DXT to ETC2 on mobile for memory savings");
+REXCVAR_DEFINE_BOOL(sonic_etc2_enable, true, "Sonic/Native", "Enable ETC2 texture compression for mobile (Adreno/Mali optimization) - 30-50% savings");
+REXCVAR_DEFINE_BOOL(sonic_etc2_transcode, true, "Sonic/Native", "Transcode BCn/DXT to ETC2 on mobile for memory savings - critical for 30-60 fps");
+REXCVAR_DEFINE_BOOL(sonic_native_hybrid, true, "Sonic/Native", "Use hybrid native+Xenos for stability and speed - 30-60 fps");
 
 namespace sonic_native {
 

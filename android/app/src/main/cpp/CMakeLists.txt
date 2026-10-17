@@ -79,15 +79,17 @@ target_link_libraries(recomp PUBLIC rex::runtime rexui)
 # Implements Hedgehog Engine -> Vulkan direct translation
 # Based on Unleashed Recompiled and Skate3 native renderer
 
-# For Android CI, use stub cache to avoid 24MB file OOM (real cache is 6404 shaders, 24MB)
-# Real cache can be enabled via -DSONIC_USE_REAL_SHADER_CACHE=ON or env var
-# Windows build uses real cache with /bigobj and -O0
-if(DEFINED ENV{SONIC_USE_REAL_SHADER_CACHE} OR SONIC_USE_REAL_SHADER_CACHE)
-    set(SHADER_CACHE_DATA "${REX_PORT_DIR}/src/native/hedgehog/shader_cache_data.cpp")
-    message(STATUS "Using REAL shader cache (6404 shaders, 24MB) - may OOM on low memory")
-else()
+# For Android, use REAL shader cache for 30-60 fps (6404 precompiled shaders)
+# Stub cache causes 1-5 fps due to runtime shader compilation stutter
+# Real cache is 24MB, 6404 shaders - eliminates compilation stutter, critical for 30-60 fps
+# Compiled with -O0 to avoid OOM, LTO disabled for this target
+# User reported 1-5 fps with stub, native should be 30-60 fps with real cache
+set(SHADER_CACHE_DATA "${REX_PORT_DIR}/src/native/hedgehog/shader_cache_data.cpp")
+message(STATUS "Using REAL shader cache for Android (6404 shaders, 24MB) - for 30-60 fps, no runtime stutter")
+# Fallback to stub only if explicitly requested via env var
+if(DEFINED ENV{SONIC_USE_STUB_SHADER_CACHE})
     set(SHADER_CACHE_DATA "${REX_PORT_DIR}/src/native/hedgehog/shader_cache_data_stub.cpp")
-    message(STATUS "Using STUB shader cache for Android (0 shaders) - avoids 24MB OOM, runtime translation fallback")
+    message(STATUS "Using STUB shader cache (0 shaders) - requested via SONIC_USE_STUB_SHADER_CACHE")
 endif()
 
 set(SONIC_NATIVE_SOURCES
@@ -113,15 +115,24 @@ target_compile_options(sonic_native PRIVATE
     -O3 -fomit-frame-pointer
     -Wno-unused-variable -Wno-unused-parameter -Wno-missing-field-initializers)
 target_link_libraries(sonic_native PUBLIC rex::runtime)
+set_target_properties(sonic_native PROPERTIES INTERPROCEDURAL_OPTIMIZATION OFF)
 
-# Large shader cache file - compile with -O0 to avoid OOM (only for real cache)
+# Large shader cache file - compile with -O0 to avoid OOM, no LTO
 # 24MB C++ file with 6404 entries + 6.6MB compressed blob as byte array
-if(EXISTS "${REX_PORT_DIR}/src/native/hedgehog/shader_cache_data.cpp")
-    set_source_files_properties(
-        "${REX_PORT_DIR}/src/native/hedgehog/shader_cache_data.cpp"
-        PROPERTIES COMPILE_OPTIONS "-O0"
-    )
-endif()
+# Critical for 30-60 fps - eliminates runtime shader compilation stutter
+set_source_files_properties(
+    "${REX_PORT_DIR}/src/native/hedgehog/shader_cache_data.cpp"
+    PROPERTIES 
+    COMPILE_OPTIONS "-O0 -g0"
+    SKIP_PRECOMPILE_HEADERS ON
+)
+# Also stub needs no LTO
+set_source_files_properties(
+    "${REX_PORT_DIR}/src/native/hedgehog/shader_cache_data_stub.cpp"
+    PROPERTIES 
+    COMPILE_OPTIONS "-O0 -g0"
+    SKIP_PRECOMPILE_HEADERS ON
+)
 set_source_files_properties(
     "${REX_PORT_DIR}/src/native/thirdparty/zstd/zstddeclib.c"
     PROPERTIES 

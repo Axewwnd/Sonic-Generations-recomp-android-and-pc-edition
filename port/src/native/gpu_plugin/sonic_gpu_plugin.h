@@ -33,10 +33,19 @@ public:
     rex::X_STATUS SetupPresentation(rex::ui::WindowedAppContext* app_context) override;
     rex::X_STATUS SetupGuestGpu(rex::runtime::FunctionDispatcher* function_dispatcher,
                                 rex::system::KernelState* kernel_state) override;
-    bool has_presentation() const override { return hasPresentation_; }
+    bool has_presentation() const override { 
+        if (xenosFallback_) return xenosFallback_->has_presentation();
+        return hasPresentation_; 
+    }
     
-    rex::ui::GraphicsProvider* provider() const override { return provider_.get(); }
-    rex::ui::Presenter* presenter() const override { return presenter_.get(); }
+    rex::ui::GraphicsProvider* provider() const override { 
+        if (xenosFallback_) return xenosFallback_->provider();
+        return provider_.get(); 
+    }
+    rex::ui::Presenter* presenter() const override { 
+        if (xenosFallback_) return xenosFallback_->presenter();
+        return presenter_.get(); 
+    }
     
     void SetInterruptCallback(uint32_t callback, uint32_t user_data) override;
     void InitializeRingBuffer(uint32_t ptr, uint32_t size_log2) override;
