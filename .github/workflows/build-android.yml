@@ -42,19 +42,10 @@ jobs:
           rm -rf cmdline-tools-tmp cmdline-tools.zip
           ls cmdline-tools/latest/bin/
 
-      - name: Accept Android SDK licenses
-        run: |
-          mkdir -p $ANDROID_SDK_ROOT/licenses
-          echo "### Baseline Template for Android SDK licenses" > $ANDROID_SDK_ROOT/licenses/android-sdk-license
-          echo "d56f5187479451eabf01fb78af6df4131768b402" >> $ANDROID_SDK_ROOT/licenses/android-sdk-license
-          echo "### Baseline Template for Android SDK preview licenses" > $ANDROID_SDK_ROOT/licenses/android-sdk-preview-license
-          echo "84831b9409646a918e30573bab4c9c91346d8abd" >> $ANDROID_SDK_ROOT/licenses/android-sdk-preview-license
-          echo "Licencias aceptadas"
-
-      - name: Install SDK components
+      - name: Install SDK components (accepting licenses automatically)
         run: |
           export PATH=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$PATH
-          sdkmanager --sdk_root=$ANDROID_SDK_ROOT \
+          yes | sdkmanager --sdk_root=$ANDROID_SDK_ROOT \
             "platform-tools" \
             "platforms;android-35" \
             "build-tools;35.0.0" \
