@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       xex_url:
-        description: 'URL opcional para descargar default.xex (material con derechos de autor - usted es responsable de obtenerlo legalmente)'
+        description: 'URL para descargar default.xex (material con derechos de autor - usted es responsable de obtenerlo legalmente)'
         required: false
-        default: ''
+        default: 'https://github.com/Axewwnd/Sonic-Generations-recomp-android-and-pc-edition/releases/download/PC/Default.xex'
   push:
     branches: [main]
 
