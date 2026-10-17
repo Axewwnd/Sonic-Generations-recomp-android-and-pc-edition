@@ -33,11 +33,12 @@ jobs:
           mkdir -p $ANDROID_SDK_ROOT
           cd $ANDROID_SDK_ROOT
           wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O cmdline-tools.zip
-          unzip -q cmdline-tools.zip
-          if [ -d "cmdline-tools" ] && [ ! -d "cmdline-tools/latest" ]; then
-            mv cmdline-tools cmdline-tools/latest
-          fi
-          rm -f cmdline-tools.zip
+          # Descomprimir a carpeta temporal para evitar conflicto de rutas
+          unzip -q cmdline-tools.zip -d cmdline-tools-tmp
+          # La estructura del zip es: cmdline-tools-tmp/cmdline-tools/bin/...
+          mkdir -p cmdline-tools/latest
+          mv cmdline-tools-tmp/cmdline-tools/* cmdline-tools/latest/
+          rm -rf cmdline-tools-tmp cmdline-tools.zip
           ls cmdline-tools/latest/bin/
 
       - name: Accept Android SDK licenses
