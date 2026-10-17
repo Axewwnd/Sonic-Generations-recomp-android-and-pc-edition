@@ -5,6 +5,16 @@
 
 #include "../rhi.h"
 
+#if defined(__ANDROID__)
+#define VK_USE_PLATFORM_ANDROID_KHR 1
+#endif
+#if defined(_WIN32)
+#define VK_USE_PLATFORM_WIN32_KHR 1
+#endif
+#if defined(__linux__) && !defined(__ANDROID__)
+#define VK_USE_PLATFORM_XLIB_KHR 1
+#endif
+
 #if defined(__has_include)
 #if __has_include(<vulkan/vulkan.h>)
 #include <vulkan/vulkan.h>

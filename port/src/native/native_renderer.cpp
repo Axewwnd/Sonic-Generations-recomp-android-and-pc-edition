@@ -221,6 +221,30 @@ std::unique_ptr<RHIDevice> CreateD3D12Device() {
 #endif
 }
 
+SonicGPUPlugin& SonicGPUPlugin::Get() {
+    static SonicGPUPlugin instance;
+    return instance;
+}
+
+bool SonicGPUPlugin::Initialize(void* windowHandle) {
+    (void)windowHandle;
+    if (initialized_) return true;
+    useNativePath_ = true;
+    initialized_ = true;
+    return true;
+}
+
+void SonicGPUPlugin::Shutdown() {
+    initialized_ = false;
+}
+
+void SonicGPUPlugin::OnCreateTexture(void* guestTexture) {
+    (void)guestTexture;
+}
+
+void SonicGPUPlugin::OnDrawCall() {
+}
+
 } // namespace sonic_native
 
 // C interface

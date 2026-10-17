@@ -1,14 +1,13 @@
-// Sonic GPU Plugin Implementation - Standalone, no Vulkan dependency
-// High-performance GPU plugin that provides both native and optimized Xenos paths
-// This file is built as librexgpu-sonic.so / rexgpu-sonic.dll
-// It does NOT depend on Vulkan headers, only on ReXGlue runtime
+// Sonic GPU Plugin Implementation - High-performance native rendering plugin
+// Minimal implementation that bypasses Xenos emulation for native path
+// Based on null plugin reference from rexglue-sdk
 
 #include "sonic_gpu_plugin.h"
 #include <rex/logging.h>
 #include <rex/cvar.h>
-#include <rex/ui/windowed_app_context.h>
-#include <rex/ui/graphics_provider.h>
-#include <rex/ui/presenter.h>
+#include <rex/system/xtypes.h>
+
+using rex::X_STATUS;
 
 REXCVAR_DEFINE_BOOL(sonic_gpu_native, true, "Sonic/GPU", "Use native rendering (true) or optimized Xenos (false)");
 REXCVAR_DEFINE_BOOL(sonic_gpu_tile_opt, true, "Sonic/GPU", "Enable tile-based optimizations for mobile GPUs");
@@ -36,6 +35,7 @@ SonicGraphicsSystem::~SonicGraphicsSystem() {
 }
 
 rex::X_STATUS SonicGraphicsSystem::SetupPresentation(rex::ui::WindowedAppContext* app_context) {
+    (void)app_context;
     REXLOG_INFO("SonicGraphicsSystem::SetupPresentation - native={}", useNativeRendering_);
     
     if (useNativeRendering_) {
@@ -43,35 +43,10 @@ rex::X_STATUS SonicGraphicsSystem::SetupPresentation(rex::ui::WindowedAppContext
         REXLOG_INFO("SonicGraphicsSystem: native rendering presentation - game will use translation layer");
         REXLOG_INFO("  Based on Unleashed Recompiled and Skate3 native renderer");
         REXLOG_INFO("  Expected: 2-3x faster on mobile, bypassing Xenos EDRAM emulation");
-        
-        // In full native mode, we still need provider/presenter for UI
-        // The actual game rendering goes via native RHI in main executable
-        // This plugin just provides the interface and no-op guest GPU
-        if (app_context) {
-            auto provider_result = app_context->CreateGraphicsProvider();
-            if (provider_result) {
-                provider_ = std::move(provider_result.value());
-                auto presenter_result = provider_->CreatePresenter();
-                if (presenter_result) {
-                    presenter_ = std::move(presenter_result.value());
-                }
-            }
-        }
-        
         return X_STATUS_SUCCESS;
     } else {
         REXLOG_INFO("SonicGraphicsSystem: using optimized Xenos path");
         hasPresentation_ = true;
-        if (app_context) {
-            auto provider_result = app_context->CreateGraphicsProvider();
-            if (provider_result) {
-                provider_ = std::move(provider_result.value());
-                auto presenter_result = provider_->CreatePresenter();
-                if (presenter_result) {
-                    presenter_ = std::move(presenter_result.value());
-                }
-            }
-        }
         return X_STATUS_SUCCESS;
     }
 }
@@ -79,6 +54,8 @@ rex::X_STATUS SonicGraphicsSystem::SetupPresentation(rex::ui::WindowedAppContext
 rex::X_STATUS SonicGraphicsSystem::SetupGuestGpu(
     rex::runtime::FunctionDispatcher* function_dispatcher,
     rex::system::KernelState* kernel_state) {
+    (void)function_dispatcher;
+    (void)kernel_state;
     
     REXLOG_INFO("SonicGraphicsSystem::SetupGuestGpu - native={}", useNativeRendering_);
     
@@ -98,6 +75,8 @@ rex::X_STATUS SonicGraphicsSystem::SetupGuestGpu(
 }
 
 void SonicGraphicsSystem::SetInterruptCallback(uint32_t callback, uint32_t user_data) {
+    (void)callback;
+    (void)user_data;
     if (useNativeRendering_) {
         return;
     }
@@ -107,6 +86,8 @@ void SonicGraphicsSystem::SetInterruptCallback(uint32_t callback, uint32_t user_
 }
 
 void SonicGraphicsSystem::InitializeRingBuffer(uint32_t ptr, uint32_t size_log2) {
+    (void)ptr;
+    (void)size_log2;
     if (useNativeRendering_) {
         REXLOG_INFO("SonicGraphicsSystem: ring buffer init ignored in native path (ptr={:x})", ptr, size_log2);
         return;
@@ -117,6 +98,8 @@ void SonicGraphicsSystem::InitializeRingBuffer(uint32_t ptr, uint32_t size_log2)
 }
 
 void SonicGraphicsSystem::EnableReadPointerWriteBack(uint32_t ptr, uint32_t block_size_log2) {
+    (void)ptr;
+    (void)block_size_log2;
     if (useNativeRendering_) {
         return;
     }
@@ -126,6 +109,9 @@ void SonicGraphicsSystem::EnableReadPointerWriteBack(uint32_t ptr, uint32_t bloc
 }
 
 void SonicGraphicsSystem::InitializeShaderStorage(const std::filesystem::path& cache_root, uint32_t title_id, bool blocking) {
+    (void)cache_root;
+    (void)title_id;
+    (void)blocking;
     REXLOG_INFO("SonicGraphicsSystem: shader storage at {} (title_id={:x})", cache_root.string(), title_id);
     if (xenosFallback_) {
         xenosFallback_->InitializeShaderStorage(cache_root, title_id, blocking);
@@ -167,8 +153,8 @@ REX_GPU_PLUGIN_EXPORT rex::system::IGraphicsSystem* rex_gpu_create(
     uint32_t abi_version, const rex::system::GpuCreateInfo* info) {
     
     if (abi_version != rex::system::kGpuPluginAbiVersion) {
-        REXLOG_ERROR("rexgpu-sonic: ABI mismatch {} vs {}", abi_version,
-                     rex::system::kGpuPluginAbiVersion);
+        REXLOG_ERROR("rexgpu-sonic: ABI mismatch {} vs {}",
+                     abi_version, rex::system::kGpuPluginAbiVersion);
         return nullptr;
     }
     
@@ -198,33 +184,4 @@ REX_GPU_PLUGIN_EXPORT rex::system::IGraphicsSystem* rex_gpu_create(
 } // extern "C"
 
 } // namespace gpu
-} // namespace sonic_native
-
-// Also provide SonicGPUPlugin simple implementation for main executable
-namespace sonic_native {
-
-SonicGPUPlugin& SonicGPUPlugin::Get() {
-    static SonicGPUPlugin instance;
-    return instance;
-}
-
-bool SonicGPUPlugin::Initialize(void* windowHandle) {
-    (void)windowHandle;
-    if (initialized_) return true;
-    useNativePath_ = true;
-    initialized_ = true;
-    return true;
-}
-
-void SonicGPUPlugin::Shutdown() {
-    initialized_ = false;
-}
-
-void SonicGPUPlugin::OnCreateTexture(void* guestTexture) {
-    (void)guestTexture;
-}
-
-void SonicGPUPlugin::OnDrawCall() {
-}
-
 } // namespace sonic_native
