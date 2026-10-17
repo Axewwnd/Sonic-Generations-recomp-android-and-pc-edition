@@ -83,14 +83,28 @@ target_compile_options(sonic_native PRIVATE ${REX_RECOMP_EH} -Wno-unused-variabl
 rexglue_apply_target_settings(sonic_native)
 
 # Large shader cache file - compile with -O0 to avoid OOM
-set_source_files_properties(
-    "${REX_PORT_DIR}/src/native/hedgehog/shader_cache_data.cpp"
-    PROPERTIES COMPILE_FLAGS "-O0"
-)
-set_source_files_properties(
-    "${REX_PORT_DIR}/src/native/thirdparty/zstd/zstddeclib.c"
-    PROPERTIES COMPILE_FLAGS "-O2 -DZSTD_DISABLE_ASM"
-)
+# 24MB C++ file with 6404 entries + 6.6MB compressed blob as byte array
+# Needs /bigobj for MSVC (large object file)
+if(MSVC)
+    set_source_files_properties(
+        "${REX_PORT_DIR}/src/native/hedgehog/shader_cache_data.cpp"
+        PROPERTIES COMPILE_OPTIONS "/Od;/bigobj"
+    )
+    set_source_files_properties(
+        "${REX_PORT_DIR}/src/native/thirdparty/zstd/zstddeclib.c"
+        PROPERTIES COMPILE_OPTIONS "/O2"
+        COMPILE_DEFINITIONS "ZSTD_DISABLE_ASM"
+    )
+else()
+    set_source_files_properties(
+        "${REX_PORT_DIR}/src/native/hedgehog/shader_cache_data.cpp"
+        PROPERTIES COMPILE_FLAGS "-O0 -g0 -Wa,-mbig-obj"
+    )
+    set_source_files_properties(
+        "${REX_PORT_DIR}/src/native/thirdparty/zstd/zstddeclib.c"
+        PROPERTIES COMPILE_FLAGS "-O2 -g0 -DZSTD_DISABLE_ASM"
+    )
+endif()
 
 # --- Optimized GPU plugin: rexgpu-sonic -------------------------------------
 # This is our high-performance replacement for rexgpu-xenos

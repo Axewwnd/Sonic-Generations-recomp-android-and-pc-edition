@@ -31,17 +31,19 @@ struct ShaderCacheEntry {
     const char* name;
 };
 
-// Generated data from XenosRecomp (in shader_cache_data.cpp)
+// Generated data from XenosRecomp (in shader_cache_data.cpp) - Vulkan only
 extern ShaderCacheEntry g_shaderCacheEntries[];
 extern const uint8_t g_compressedSpirvCache[];
 extern const size_t g_spirvCacheCompressedSize;
 extern const size_t g_spirvCacheDecompressedSize;
 extern const size_t g_shaderCacheEntryCount;
 
-// Optional DXIL/AIR if present (vulkan cache only has SPIR-V)
-extern const uint8_t g_compressedDxilCache[];
-extern const size_t g_dxilCacheCompressedSize;
-extern const size_t g_dxilCacheDecompressedSize;
+// DXIL cache not present in Vulkan-only build, provide inline dummy symbols
+// to avoid linker errors if some code references them (e.g., D3D12 path)
+// Using inline variables (C++17) avoids ODR violations
+inline const uint8_t g_compressedDxilCache[] = {0};
+inline const size_t g_dxilCacheCompressedSize = 0;
+inline const size_t g_dxilCacheDecompressedSize = 0;
 
 // ============================================================================
 // High-level cache wrapper - provides decompressed SPIR-V on demand

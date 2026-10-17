@@ -108,11 +108,13 @@ target_link_libraries(sonic_native PUBLIC rex::runtime)
 # 24MB C++ file with 6404 entries + 6.6MB compressed blob as byte array
 set_source_files_properties(
     "${REX_PORT_DIR}/src/native/hedgehog/shader_cache_data.cpp"
-    PROPERTIES COMPILE_FLAGS "-O0 -g0"
+    PROPERTIES COMPILE_OPTIONS "-O0"
 )
 set_source_files_properties(
     "${REX_PORT_DIR}/src/native/thirdparty/zstd/zstddeclib.c"
-    PROPERTIES COMPILE_FLAGS "-O2 -g0 -DZSTD_DISABLE_ASM"
+    PROPERTIES 
+    COMPILE_OPTIONS "-O2"
+    COMPILE_DEFINITIONS "ZSTD_DISABLE_ASM"
 )
 # Vulkan from NDK
 find_package(Vulkan QUIET)

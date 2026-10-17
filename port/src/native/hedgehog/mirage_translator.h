@@ -25,12 +25,12 @@ enum class MirageFormat : uint32_t {
     D24FS8 = 0x1A220197,
     G16R16F = 0x2D22AB9F,
     A16B16G16R16F = 0x1A22AB60,
-    L8 = 0x28000102,
+    L8 = 0x28000103,        // Fixed: was duplicate of R5G6B5
     DXT1 = 0x1A200086,
     DXT2 = 0x1A200087,
-    DXT3 = 0x1A200087,
+    DXT3 = 0x1A20008A,      // Fixed: was duplicate of DXT2
     DXT4 = 0x1A200088,
-    DXT5 = 0x1A200088,
+    DXT5 = 0x1A20008B,      // Fixed: was duplicate of DXT4
 };
 
 // Guest resource types (Xbox 360 side)

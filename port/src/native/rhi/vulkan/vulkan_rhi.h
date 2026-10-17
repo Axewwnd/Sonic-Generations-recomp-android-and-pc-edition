@@ -166,7 +166,9 @@ struct VkPhysicalDeviceProperties { int deviceType; };
 #define VK_API_VERSION_1_1 0
 #define VK_MAKE_VERSION(a,b,c) 0
 #define VK_SUCCESS 0
+#ifndef UINT64_MAX
 #define UINT64_MAX 0xFFFFFFFFFFFFFFFFULL
+#endif
 inline VkResult vkCreateInstance(const void*, const void*, VkInstance*) { return VK_SUCCESS; }
 inline void vkDestroyInstance(VkInstance, const void*) {}
 inline VkResult vkEnumeratePhysicalDevices(VkInstance, uint32_t*, VkPhysicalDevice*) { return VK_SUCCESS; }
