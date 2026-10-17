@@ -93,7 +93,26 @@ jobs:
             "-PrexPortDir=$GITHUB_WORKSPACE/port" \
             "-PrexSdkDir=$GITHUB_WORKSPACE/android/sdk/rexglue-sdk" \
             "-PrexVersionCode=$GITHUB_RUN_NUMBER" \
-            "-PrexVersionName=1.0.$GITHUB_RUN_NUMBER"
+            "-PrexVersionName=1.0.$GITHUB_RUN_NUMBER" 2>&1 | tee build.log
+          if [ ${PIPESTATUS[0]} -ne 0 ]; then
+            echo "::group::Build failures"
+            grep -i "error:" build.log | head -n 30 | while read line; do
+              echo "::error::$line"
+            done
+            echo "::endgroup::"
+            echo "::group::Tail of build.log"
+            tail -n 100 build.log
+            echo "::endgroup::"
+            exit 1
+          fi
+
+      - name: Upload build log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-build-log
+          path: android/build.log
+          retention-days: 7
 
       - name: ccache stats
         if: always()
