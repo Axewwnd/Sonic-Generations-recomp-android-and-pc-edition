@@ -59,5 +59,51 @@ void OptimizeTextureCache();
 // 5. Shader cache: persistent, flush every 64 shaders
 void OptimizeShaderCache();
 
+// 6. ETC2 texture compression for mobile optimization
+// Transcode BCn/DXT (desktop) to ETC2 (mobile) to save memory bandwidth
+// ETC2 is natively supported on Adreno/Mali/PowerVR, BCn requires extension
+struct ETC2Config {
+    bool enabled = true;
+    bool transcodeBC1ToETC2 = true;  // DXT1 -> ETC2 RGB
+    bool transcodeBC3ToETC2 = true;  // DXT5 -> ETC2 RGBA
+    bool keepBCnForQuality = false;  // Keep BCn if quality critical
+};
+
+void EnableETC2Compression(const ETC2Config& config);
+bool ShouldUseETC2();
+bool ShouldTranscodeBC1ToETC2();
+bool ShouldTranscodeBC3ToETC2();
+
+// ETC2 transcoding stats
+struct ETC2Stats {
+    uint64_t texturesTranscoded = 0;
+    uint64_t memorySavedBytes = 0;
+    uint64_t bc1ToEtc2 = 0;
+    uint64_t bc3ToEtc2 = 0;
+};
+
+ETC2Stats GetETC2Stats();
+void ResetETC2Stats();
+
+// Format translation helpers
+enum class TextureFormat {
+    BC1,    // DXT1 - RGB, 4bpp
+    BC2,    // DXT3 - RGBA, 8bpp
+    BC3,    // DXT5 - RGBA, 8bpp
+    BC4,    // RGTC1 - R, 4bpp
+    BC5,    // RGTC2 - RG, 8bpp
+    ETC2_RGB,   // ETC2 RGB, 4bpp - 50% smaller than BC3
+    ETC2_RGBA,  // ETC2 RGBA, 8bpp - same as BC3 but better for mobile
+    ETC2_EAC_R, // EAC R11
+    ETC2_EAC_RG, // EAC RG11
+    RGBA8,      // Uncompressed
+    Unknown
+};
+
+TextureFormat GetSourceFormat(uint32_t xenosFormat);
+TextureFormat GetETC2TargetFormat(TextureFormat src);
+bool IsETC2Format(TextureFormat fmt);
+size_t GetBytesPerBlock(TextureFormat fmt);
+
 } // namespace optimizations
 } // namespace sonic_native

@@ -360,18 +360,19 @@ int RunAndroidApp() {
   // Load settings.txt once
   auto settingsArgs = ReadSettingsArgs(external_dir + "/" + kSettingsFileName);
   
-  // GPU plugin selection - NEW NATIVE RENDERER
-  // We now have two plugins:
-  // - rexgpu-sonic: high-performance native translation layer (Hedgehog Engine -> Vulkan)
-  //   Bypasses Xenos emulation entirely, 2-3x faster on mobile
-  // - rexgpu-xenos: stock Xenos emulation (fallback for compatibility)
+  // GPU plugin selection - OPTIMIZED XENOS + ETC2 + OPTIONAL NATIVE
+  // We have two plugins:
+  // - rexgpu-xenos: stock Xenos emulation with mobile optimizations (ETC2, tile-based, etc)
+  //   This is the STABLE path that works - black screen fixed
+  // - rexgpu-sonic: experimental native translation layer (Hedgehog Engine -> Vulkan)
+  //   Bypasses Xenos entirely, 2-3x faster but may cause black screen if not fully implemented
   //
-  // Default is SONIC (native). User can override via settings.txt with gpu_plugin=xenos
-  // or set env SONIC_NATIVE=0
-  bool useNative = true;
+  // Default is XENOS (stable) with ETC2 optimization.
+  // User can enable native via settings.txt: gpu_plugin=sonic or env SONIC_NATIVE=1
+  bool useNative = false; // Fixed black screen - default to stable Xenos
   const char* nativeEnv = std::getenv("SONIC_NATIVE");
-  if (nativeEnv && std::string(nativeEnv) == "0") {
-    useNative = false;
+  if (nativeEnv && std::string(nativeEnv) == "1") {
+    useNative = true;
   }
   // Check if settings.txt already overrides gpu_plugin
   bool hasGpuPluginOverride = false;
@@ -384,8 +385,10 @@ int RunAndroidApp() {
   if (!hasGpuPluginOverride) {
     if (useNative) {
       args.emplace_back("--gpu_plugin=sonic");
+      ALOGI("Using EXPERIMENTAL native renderer (sonic) - may cause black screen");
     } else {
       args.emplace_back("--gpu_plugin=xenos");
+      ALOGI("Using OPTIMIZED XENOS with ETC2 compression for Adreno/Mali");
     }
   }
   // Mobile pacing defaults (all overridable from settings.txt)

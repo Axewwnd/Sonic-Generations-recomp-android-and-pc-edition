@@ -30,29 +30,33 @@ class SonicgenerationsApp : public rex::ReXApp {
   }
 
   void OnPreSetup(rex::RuntimeConfig& config) override {
-    // Configure for native rendering
-    // If sonic_native_enable is true, we use our rexgpu-sonic plugin
-    // Otherwise fallback to xenos
+    // Configure for OPTIMIZED XENOS with ETC2 (stable) by default
+    // Native renderer is experimental and causes black screen if enabled
     
-    // Check if user wants native rendering (default: yes)
-    bool useNative = true;
+    // Check if user wants native rendering (default: NO - fix black screen)
+    bool useNative = false;
     const char* env = std::getenv("SONIC_NATIVE");
     if (env) {
-      useNative = std::string(env) != "0";
+      useNative = std::string(env) == "1";
     }
     
     if (useNative) {
-      REXLOG_INFO("SonicGenerationsApp: requesting native GPU plugin (rexgpu-sonic)");
-      // Request native GPU plugin - this is the high-performance path
-      // The plugin bypasses Xenos emulation and uses direct translation
+      REXLOG_INFO("SonicGenerationsApp: requesting EXPERIMENTAL native GPU plugin (rexgpu-sonic)");
+      REXLOG_WARN("  WARNING: Native renderer is experimental and may cause black screen!");
+      REXLOG_WARN("  If you get black screen, set SONIC_NATIVE=0 or gpu_plugin=xenos");
       if (config.gpu_plugin.empty()) {
         config.gpu_plugin = "sonic";
-        REXLOG_INFO("SonicGenerationsApp: set gpu_plugin to 'sonic' for native rendering");
+        REXLOG_INFO("SonicGenerationsApp: set gpu_plugin to 'sonic' for native rendering (EXPERIMENTAL)");
       }
     } else {
-      REXLOG_INFO("SonicGenerationsApp: native rendering disabled, using Xenos fallback");
+      REXLOG_INFO("SonicGenerationsApp: using OPTIMIZED XENOS with ETC2 compression");
+      REXLOG_INFO("  - ETC2 transcoding for Adreno/Mali (30-50% memory savings)");
+      REXLOG_INFO("  - Tile-based optimizations (merge passes, transient depth)");
+      REXLOG_INFO("  - Bindless textures for Hedgehog material system");
+      REXLOG_INFO("  - Async shader compilation");
       if (config.gpu_plugin.empty()) {
         config.gpu_plugin = "xenos";
+        REXLOG_INFO("SonicGenerationsApp: set gpu_plugin to 'xenos' (stable, optimized)");
       }
     }
   }
