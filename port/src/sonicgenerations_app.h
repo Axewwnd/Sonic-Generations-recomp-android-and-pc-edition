@@ -43,19 +43,18 @@ class SonicgenerationsApp : public rex::ReXApp {
     
     if (useNative) {
       REXLOG_INFO("SonicGenerationsApp: requesting native GPU plugin (rexgpu-sonic)");
-      // The GPU plugin is selected via --gpu_plugin cvar
-      // We set it here if not already set
-      // In Android, this is set in android_main.cpp
-      // In Windows, via CMakeLists.txt GPU_PLUGINS
+      // Request native GPU plugin - this is the high-performance path
+      // The plugin bypasses Xenos emulation and uses direct translation
+      if (config.gpu_plugin.empty()) {
+        config.gpu_plugin = "sonic";
+        REXLOG_INFO("SonicGenerationsApp: set gpu_plugin to 'sonic' for native rendering");
+      }
     } else {
       REXLOG_INFO("SonicGenerationsApp: native rendering disabled, using Xenos fallback");
+      if (config.gpu_plugin.empty()) {
+        config.gpu_plugin = "xenos";
+      }
     }
-    
-    // Optimize runtime config for native rendering
-    // These settings improve performance on mobile
-    config.clear_memory_page_state = false; // Don't re-upload guest memory every frame
-    config.ignore_thread_affinities = true; // Let OS schedule freely on big.LITTLE
-    config.ignore_thread_priorities = true;
   }
 
   void OnPostSetup() override {
