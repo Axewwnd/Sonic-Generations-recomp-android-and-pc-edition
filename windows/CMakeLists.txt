@@ -67,7 +67,6 @@ set(SONIC_NATIVE_SOURCES
     "${REX_PORT_DIR}/src/native/thirdparty/zstd/zstddeclib.c"
     "${REX_PORT_DIR}/src/native/thirdparty/smol-v/smolv.cpp"
     "${REX_PORT_DIR}/src/native/rhi/vulkan/vulkan_rhi.cpp"
-    "${REX_PORT_DIR}/src/native/rhi/null/null_rhi.h"
     "${REX_PORT_DIR}/src/native/optimizations/xenos_optimizations.cpp"
     "${REX_PORT_DIR}/src/native/gpu_plugin/sonic_gpu_plugin.cpp"
 )
